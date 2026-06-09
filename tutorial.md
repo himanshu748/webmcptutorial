@@ -56,18 +56,16 @@ No Node, no npm, no frameworks. If a tutorial ever makes you `npm install` 600 p
 
 ## 4. Project setup
 
-Make a folder and five files. That's the whole project:
+Make a folder and **three files** — that's the whole project:
 
 ```
-webmcp-ready-portfolio/
-├── index.html      # structure
-├── style.css       # the pixel-art look
-├── app.js          # data + interactions + agent tools
-├── README.md       # project notes
-└── tutorial.md     # this file
+my-portfolio/
+├── index.html   # structure
+├── style.css    # the look
+└── app.js       # data, interactions, and the agent tools
 ```
 
-Create them empty for now. We'll fill `index.html`, `style.css`, and `app.js` in that order.
+Create them empty for now; we'll fill them in that order. No build files, no config — just three files. (A `README.md` is a nice optional extra if you push to GitHub, but you don't need it to build.)
 
 ---
 
