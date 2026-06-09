@@ -928,6 +928,43 @@ navigator.modelContext.registerTool({
 
 ---
 
+## 17. WebMCP FAQ ❓
+
+**Do I need a backend or server?**
+No. WebMCP tools run entirely in the browser, in JavaScript. This whole project has zero backend.
+
+**Will this work in a normal browser today?**
+The tools *register* via the `@mcp-b/global` polyfill on any modern browser. To actually *call* them from an AI, the user needs the **WebMCP / MCP-B browser extension** or Chrome's native `webmcp` flag. Native support is still rolling out.
+
+**Does it work if I just open `index.html` from my files?**
+The site and the demo panel work offline. But *real* WebMCP needs a **secure context (HTTPS or `localhost`)** and the polyfill (a CDN script), so when you open via `file://` or offline it gracefully **falls back** to the demo panel.
+
+**Is it safe to expose tools to agents?**
+Yes — if you keep them **read-only** (tag them `readOnlyHint: true`). Avoid destructive tools; gate anything risky behind user confirmation; never return private data. A tool should never let an agent do something the user couldn't safely do themselves.
+
+**Can an agent see my private data?**
+Only what your tools choose to return. Return public-safe data only (we even return `twitter: null` instead of faking a handle).
+
+**What's the difference between WebMCP and MCP-B?**
+WebMCP is the **standard** (the `navigator.modelContext` API). MCP-B is the **runtime + extension** that makes it work in real browsers today and connects it to AI clients. See section 15 for the full table.
+
+**Two tools with the same name?**
+`registerTool` **throws** on duplicate names. Use unique, descriptive names like `search_docs` — not `doStuff`.
+
+**How do I remove a tool later?**
+Pass an `AbortSignal` when registering, then call `controller.abort()`. (The old `unregisterTool(name)` is deprecated.)
+
+**`navigator.modelContext` is `undefined` in my console — why?**
+Either the polyfill hasn't loaded yet, you're not on HTTPS/localhost, or the CDN is blocked. Always **feature-detect** before using it.
+
+**Can I use this with React/Vue/Svelte?**
+Yes. Register a tool when the component mounts and abort it on unmount so agents never see tools for UI that's gone. (There's even `@mcp-b/react-webmcp` with hooks.)
+
+**Is WebMCP finished?**
+No — it's an evolving **W3C** proposal. Expect changes. Feature-detect, pin your polyfill version, and keep an eye on the spec.
+
+---
+
 ## 🎬 That's a wrap
 
 You built a portfolio that's genuinely **dual-audience**: gorgeous for humans, structured for machines. More importantly, you learned a mindset — *treat your site's capabilities as a clean set of tools* — that's going to matter a lot as AI agents become regular visitors.
