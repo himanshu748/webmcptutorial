@@ -710,6 +710,224 @@ You've got a working agent-ready portfolio. Want to level up? Try:
 
 ---
 
+## 15. WebMCP, in depth 🧠
+
+You've built it — now here's *everything* worth knowing about WebMCP, so you actually understand what you shipped.
+
+### The big idea
+
+For 30 years the web was built for human eyes: pages, buttons, layouts. Now AI agents browse too — and making them *scrape* HTML and guess what a button does is fragile. **WebMCP flips it:** a page hands the agent a clean list of **tools** (named functions with typed inputs), so the agent calls `get_featured_project()` instead of reverse-engineering your DOM.
+
+### MCP vs WebMCP vs MCP-B
+
+These three names confuse everyone. Here's the clean split:
+
+| Name | What it is | Where tools live |
+|------|-----------|------------------|
+| **MCP** (Model Context Protocol) | The open standard for giving AI models tools & data. | Usually a **server** (HTTP / stdio). |
+| **WebMCP** | The **browser** standard: register tools on `navigator.modelContext`. A W3C Web Machine Learning Community Group proposal. | **Client-side JavaScript** on the page. |
+| **MCP-B** | The runtime + transports + browser **extension** that implement WebMCP today and bridge page tools to real MCP clients. "MCP for the Browser." | Same page tools, made reachable by agents. |
+
+One-liner from the project itself: **WebMCP + MCP = MCP-B.**
+
+### The mental model
+
+> A WebMCP page is a **client-side MCP server.** The tools run in the browser tab, with the user's existing session and login — so an agent acts *as the user*, not as some external bot with separate credentials.
+
+That's the superpower: no separate API, no second auth, no scraping. The page already knows how to do things; WebMCP just *exposes* those things as callable tools.
+
+### The API surface
+
+The whole standard hangs off one object:
+
+```js
+// The spec defines document.modelContext; today's implementations also expose
+// navigator.modelContext. Portable code checks both.
+const mc = navigator.modelContext || document.modelContext;
+```
+
+Its one essential method is `registerTool(tool, options?)`.
+
+### Anatomy of a tool
+
+```js
+navigator.modelContext.registerTool({
+  name: "search_products",          // required, unique, [a-zA-Z0-9_.-], ≤128 chars
+  title: "Search products",         // optional human/agent-friendly display name
+  description: "Search the catalog by keyword.", // required — agents read this to decide when to call
+  inputSchema: {                    // JSON Schema describing the arguments
+    type: "object",
+    properties: { query: { type: "string", description: "Search terms" } },
+    required: ["query"],
+  },
+  annotations: { readOnlyHint: true }, // safety hints (see below)
+  async execute({ query }) {        // the function the agent runs
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    return { content: [{ type: "text", text: await res.text() }] };
+  },
+});
+```
+
+- **`name`** — unique id. Registering a duplicate name **throws**. Use clear, namespaced names (`search_docs`, not `doStuff`).
+- **`description`** — this is the agent's *instruction manual* for the tool. Write it for the model, not just for yourself.
+- **`inputSchema`** — standard **JSON Schema**. Be explicit (`enum`, `required`, `minimum`…). A vague `{ type: "object" }` tells the agent nothing. Omitted ⇒ defaults to `{ type: "object", properties: {} }`.
+- **`execute`** — sync or async; receives the parsed args; returns an MCP result.
+- **`annotations`** — hints that help an agent decide *how safe* a call is.
+
+### What `execute` returns: MCP content blocks
+
+Results use MCP's content shape — an array of blocks:
+
+```js
+return { content: [{ type: "text", text: JSON.stringify(data) }] };
+```
+
+`text` is the everyday block. MCP also defines other block types (e.g. image, resource) for richer returns. Keep the payload **LLM-friendly**: clean JSON or plain text the model can parse. On failure, return a structured error rather than throwing silently — the agent can surface it.
+
+### Tool lifecycle (register / update / remove)
+
+- **Register** as early as the relevant UI exists. Don't register at module scope before the DOM/feature is ready.
+- **Remove** with an `AbortSignal` — the current, recommended path:
+
+```js
+const ac = new AbortController();
+navigator.modelContext.registerTool(myTool, { signal: ac.signal });
+// later (e.g. component unmount):
+ac.abort(); // tool is unregistered
+```
+
+- **SPAs:** scope tool lifetimes to component lifetimes (register on mount, abort on unmount) so agents never see "ghost" tools for UI that's gone.
+- **Deprecated:** `provideContext()` and `clearContext()` were removed in the March 2026 spec revision; `unregisterTool(name)` is being phased out in favor of `AbortSignal`. They may still work but emit warnings.
+
+### Discovering & calling tools
+
+The exact helper depends on the implementation:
+
+| Method | Where | Purpose |
+|--------|-------|---------|
+| `getTools()` / `executeTool(name, argsJson)` | Chrome native imperative API | List & run tools (returns `null` if a call triggers navigation) |
+| `listTools()` / `callTool({ name, arguments })` | `@mcp-b/global` | List & run via the MCP-B runtime |
+| `navigator.modelContextTesting.listTools()` | testing shim (polyfills) | Inspect what's registered — great for self-tests |
+| `requestUserInteraction(cb)` | spec (`ModelContextClient`) | Ask for a user gesture/confirmation before a sensitive action |
+
+That's exactly how our portfolio *verifies itself* — it calls `navigator.modelContextTesting.listTools()` and shows the live count.
+
+### The security model 🔒
+
+WebMCP is deliberately cautious — copy these habits:
+
+- **Secure context required.** WebMCP only works over **HTTPS** (or `localhost`).
+- **`readOnlyHint: true`** — marks a tool that only *reads*, never mutates. Signals "always safe to call."
+- **`untrustedContentHint`** — flags that a tool's output may contain untrusted/user-generated content, so the agent treats it carefully.
+- **Cross-origin isolation.** Tools are **not** exposed to cross-origin iframes by default. To share with a trusted origin, use the `exposedTo: ["https://partner.com"]` option (HTTPS only) and the `tools` Permissions Policy.
+- **Confirm risky actions.** Anything that sends, deletes, pays, or changes state should require explicit user confirmation (`requestUserInteraction`).
+- **Never expose private data.** A tool should return only what the user could already see/do safely themselves.
+
+### Browser support today (mid-2026)
+
+| Browser | Native WebMCP | Polyfill works? |
+|---------|---------------|-----------------|
+| Chrome / Edge (with `webmcp` flag) | Yes | n/a |
+| Chrome / Edge (default) | No | Yes |
+| Firefox | No | Yes |
+| Safari | No | Yes |
+
+Because native support is still rolling out, you load a polyfill — and always **feature-detect**:
+
+```js
+if ("modelContext" in navigator && "registerTool" in navigator.modelContext) {
+  // safe to register
+}
+```
+
+Two polyfill choices from the MCP-B project:
+- **`@mcp-b/global`** — polyfill **plus** the MCP-B bridge (so the extension/agents can reach your tools). *This is what our project uses.*
+- **`@mcp-b/webmcp-polyfill`** — the strict core only (just installs `navigator.modelContext`).
+
+### How an agent actually calls your tools (end-to-end)
+
+1. Your page loads `@mcp-b/global` → `navigator.modelContext` exists.
+2. You `registerTool(...)` → tools live in the tab.
+3. The user has the **MCP-B browser extension** (or Chrome's native WebMCP) installed.
+4. The extension detects your page's tools and exposes them to an **MCP client** (Claude Desktop, an in-browser assistant, etc.).
+5. The agent calls a tool → your `execute()` runs in the page → the result flows back. **You wrote no agent code.**
+
+For desktop MCP clients, `@mcp-b/webmcp-local-relay` bridges browser tools over WebSocket + stdio.
+
+### WebMCP vs server-side MCP — when to use which
+
+| | WebMCP (browser) | Server-side MCP |
+|---|---|---|
+| Tools run | In the page, as the logged-in user | On a server |
+| Auth | Reuses the user's session/cookies | Needs its own credentials |
+| Setup | A script tag, no backend | Host & run an MCP server |
+| Best for | Acting on *this* site for *this* user | Shared/backend capabilities, multiple clients |
+
+They're complementary — many apps will offer both, with matching tool names.
+
+### Best practices (the short list)
+
+- Write **descriptions for the model**; be specific.
+- Make **schemas explicit** (enums, required, ranges).
+- **Return clean JSON/text**; on error, return a structured error, don't throw silently.
+- **Namespace tool names** to avoid collisions.
+- **Scope lifecycles** (register/abort with the UI).
+- Add **Schema.org JSON-LD** as a complementary signal (agents read it too — our page does this in `<head>`).
+
+### Common pitfalls (learn from others)
+
+- Registering at **module scope** before the DOM/feature is ready.
+- **Leaky SPAs**: forgetting to abort → ghost tools the agent can still call.
+- **Over-broad schemas**: `{ type: "object" }` with no properties.
+- **Silent `execute` failures**: always `try/catch` and return an error block.
+- **Wrong load order**: the polyfill must run before code that touches `navigator.modelContext` (we side-step this by polling).
+- **Forgetting HTTPS**: no secure context ⇒ no WebMCP.
+
+### Spec status & the future
+
+WebMCP is incubated in the **W3C Web Machine Learning Community Group** (latest draft: April 23, 2026). It's young and moving — APIs like `provideContext`/`clearContext` were already removed. Track it via the W3C spec and Chrome's "AI on Chrome" docs. The direction is clear: **the agent-readable web is becoming a first-class platform feature.**
+
+---
+
+## 16. WebMCP cheat sheet 📌
+
+**The smallest possible tool:**
+
+```js
+navigator.modelContext.registerTool({
+  name: "get_page_title",
+  description: "Get the current page title",
+  inputSchema: { type: "object", properties: {} },
+  async execute() {
+    return { content: [{ type: "text", text: document.title }] };
+  },
+});
+```
+
+**API at a glance:**
+
+| Thing | Quick reference |
+|-------|-----------------|
+| Entry object | `navigator.modelContext` (or `document.modelContext`) |
+| Register | `registerTool({ name, description, inputSchema, execute, annotations }, { signal })` |
+| Unregister | `ac.abort()` via the `AbortSignal` you passed |
+| Result shape | `{ content: [{ type: "text", text }] }` |
+| Safety hints | `annotations: { readOnlyHint, untrustedContentHint }` |
+| Inspect (test) | `navigator.modelContextTesting.listTools()` |
+| Feature-detect | `"modelContext" in navigator && "registerTool" in navigator.modelContext` |
+| Requirement | Secure context (**HTTPS** or `localhost`) |
+| Make it real today | `<script src="https://unpkg.com/@mcp-b/global@3.0.0/dist/index.iife.js"></script>` |
+
+**Glossary:** **MCP** = the protocol · **WebMCP** = the browser API (`navigator.modelContext`) · **MCP-B** = the browser runtime/extension that runs it · **tool** = a named function an agent can call · **`inputSchema`** = JSON Schema for the args · **content block** = a piece of an MCP result · **`readOnlyHint`** = "this tool only reads."
+
+**Go deeper:**
+- WebMCP spec (W3C): https://webmachinelearning.github.io/webmcp/
+- AI on Chrome — WebMCP: https://developer.chrome.com/docs/ai/webmcp
+- MCP-B docs: https://docs.mcp-b.ai
+- Model Context Protocol: https://modelcontextprotocol.io
+
+---
+
 ## 🎬 That's a wrap
 
 You built a portfolio that's genuinely **dual-audience**: gorgeous for humans, structured for machines. More importantly, you learned a mindset — *treat your site's capabilities as a clean set of tools* — that's going to matter a lot as AI agents become regular visitors.

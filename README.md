@@ -41,6 +41,14 @@ That's a small idea with a big payoff: your site becomes reliable for the next w
 
 ---
 
+## 🧠 WebMCP vs MCP vs MCP-B
+
+- **MCP** (Model Context Protocol) — the open standard for giving AI models tools & data; tools usually live on a **server**.
+- **WebMCP** — the **browser** standard: a page registers tools on `navigator.modelContext`, so tools live in **client-side JS** (a W3C Web Machine Learning Community Group proposal).
+- **MCP-B** — "MCP for the Browser": the runtime, transports, and extension that implement WebMCP today and bridge page tools to real MCP clients. This project uses its **`@mcp-b/global`** polyfill.
+
+> One-liner: **WebMCP + MCP = MCP-B.** The full deep-dive — complete API surface, tool lifecycle, security model, how agents connect end-to-end, common pitfalls, and a cheat sheet — is in [`tutorial.md`](tutorial.md) (sections 15–16) and on the live tutorial page.
+
 ## 🧱 Tech stack
 
 | Layer | Tech |
