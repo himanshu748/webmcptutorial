@@ -119,6 +119,15 @@
      accidentally mutate our source data, and every result serializes cleanly. */
   const clone = (value) => JSON.parse(JSON.stringify(value));
 
+  /* Safe localStorage access — never throws. Sandboxed iframes (no
+     allow-same-origin) and some privacy modes block storage, so we guard it. */
+  function safeGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* storage blocked — ignore */ }
+  }
+
   /* Shared matching logic — used by BOTH the human filter chips and the
      filter_projects_by_stack agent tool, so they can never disagree. */
   function projectMatchesStack(project, stack) {
@@ -417,7 +426,7 @@
     const root = document.documentElement;
 
     // Restore the saved choice (defaults to the dark theme set in the HTML).
-    const saved = localStorage.getItem("theme");
+    const saved = safeGet("theme");
     if (saved) root.setAttribute("data-theme", saved);
     const syncIcon = () => {
       if (icon) icon.textContent = root.getAttribute("data-theme") === "light" ? "☀️" : "🌙";
@@ -427,7 +436,7 @@
     toggle.addEventListener("click", () => {
       const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
       root.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
+      safeSet("theme", next);
       syncIcon();
     });
   }

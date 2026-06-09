@@ -742,12 +742,12 @@ Now go make it yours. Swap in your data, your projects, your colors. And the nex
 
       // Theme toggle (shares the saved preference with the portfolio).
       var root = document.documentElement;
-      var saved = localStorage.getItem('theme');
+      var saved = null; try { saved = localStorage.getItem('theme'); } catch (e) {}
       if (saved) root.setAttribute('data-theme', saved);
       var tt = document.getElementById('theme-toggle');
       function syncIcon() { var i = tt && tt.querySelector('.theme-toggle-icon'); if (i) i.textContent = root.getAttribute('data-theme') === 'light' ? '\u2600\uFE0F' : '\uD83C\uDF19'; }
       syncIcon();
-      if (tt) tt.addEventListener('click', function () { var n = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; root.setAttribute('data-theme', n); localStorage.setItem('theme', n); syncIcon(); });
+      if (tt) tt.addEventListener('click', function () { var n = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; root.setAttribute('data-theme', n); try { localStorage.setItem('theme', n); } catch (e) {} syncIcon(); });
     })();
   </script>
 </body>
