@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Himanshu Kumar — AI Tools Builder | WebMCP-Ready Portfolio</title>
+  <meta
+    name="description"
+    content="Portfolio of Himanshu Kumar, an AI tools builder and student developer. Built for humans AND AI agents using a WebMCP-style tool registry."
+  />
+
+  <!-- Open Graph (nice previews when shared) -->
+  <meta property="og:title" content="Himanshu Kumar — WebMCP-Ready Portfolio" />
+  <meta
+    property="og:description"
+    content="A portfolio that humans can read and AI agents can call. Built with plain HTML, CSS, and JavaScript."
+  />
+  <meta property="og:type" content="website" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800&family=VT323&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!--
+    Structured data (Schema.org). This is the "old school" way machines read a page.
+    WebMCP (added in app.js) is the "new school" way: callable tools instead of guesswork.
+  -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Himanshu Kumar",
+      "jobTitle": "AI Tools Builder & Student Developer",
+      "url": "https://github.com/himanshu748",
+      "sameAs": [
+        "https://github.com/himanshu748",
+        "https://linkedin.com/in/himanshu748"
+      ],
+      "knowsAbout": ["AI agents", "Web development", "Python", "JavaScript", "FastAPI", "Browser-based AI"]
+    }
+  </script>
+</head>
+
+<body>
+  <!-- ===================== HEADER / NAV ===================== -->
+  <header class="site-header">
+    <nav class="nav container" aria-label="Primary">
+      <a href="#top" class="brand" aria-label="Himanshu Kumar — home">
+        <span class="brand-mark">HK</span>
+        <span class="brand-text">Himanshu Kumar</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#skills">Skills</a>
+        <a href="#projects">Projects</a>
+        <a href="#agent-tools">Agent Tools</a>
+        <a href="#contact">Contact</a>
+        <a href="tutorial.html">Tutorial</a>
+      </div>
+
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark and light theme">
+        <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- ===================== HERO ===================== -->
+    <section class="hero container">
+      <div class="hero-text">
+        <p class="eyebrow">AI tools builder · student developer · agentic-AI enthusiast</p>
+        <h1>
+          I build AI tools and
+          <span class="grad-text">agent-ready</span>
+          web apps.
+        </h1>
+        <p class="hero-sub">
+          Hi, I'm <strong>Himanshu Kumar</strong>. I make browser-based AI apps and developer tools — and
+          this portfolio is built for humans <em>and</em> AI agents. Same site, two audiences.
+        </p>
+
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#projects">View projects</a>
+          <a class="btn btn-ghost" href="#agent-tools">Try the agent tools →</a>
+        </div>
+
+        <ul class="hero-meta">
+          <li><span aria-hidden="true">📍</span> Lucknow, India · open to remote</li>
+          <li><span aria-hidden="true">🎓</span> B.Tech CS (AI &amp; Data Science), 2027</li>
+        </ul>
+      </div>
+
+      <!-- A small, honest visual: a peek at the machine-readable side of the page -->
+      <aside class="hero-card" aria-label="What an AI agent sees">
+        <div class="hero-card-head">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-amber"></span>
+          <span class="dot dot-green"></span>
+          <span class="hero-card-title">agent view</span>
+        </div>
+<pre class="hero-card-body"><code>&gt; agent.callTool("get_featured_project")
+
+{
+  "title": "Pixel Digit Recognizer",
+  "why": "Real Python neural net,
+           running 100% in the browser",
+  "live": "himanshu748.github.io/
+            pixel-digit-recognizer"
+}</code></pre>
+      </aside>
+    </section>
+
+    <!-- ===================== ABOUT ===================== -->
+    <section id="about" class="section container">
+      <h2 class="section-title"><span class="section-num">01</span> About</h2>
+      <div class="about-grid">
+        <p class="about-lead">
+          I'm a computer-science student who loves turning AI ideas into things people can actually click.
+          Most of my projects live in the browser or run on small, honest backends — no magic, just
+          Python, JavaScript, and a lot of curiosity.
+        </p>
+        <p>
+          Lately I've been fascinated by <strong>AI agents</strong> and a simple question: if agents are
+          starting to browse the web, why do we still make them guess their way around our sites? This
+          portfolio is my answer — it exposes clean, structured <strong>tools</strong> an agent can call,
+          using the emerging <strong>WebMCP</strong> approach. I also enjoy writing beginner-friendly
+          tutorials, because the best way to learn something is to teach it.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== SKILLS ===================== -->
+    <section id="skills" class="section container">
+      <h2 class="section-title"><span class="section-num">02</span> Skills</h2>
+      <p class="section-sub">Grouped the way I'd describe them to a teammate (or an agent).</p>
+      <div id="skills-grid" class="skills-grid">
+        <!-- Skill groups are rendered by app.js from the same data the agent tools use -->
+      </div>
+    </section>
+
+    <!-- ===================== PROJECTS ===================== -->
+    <section id="projects" class="section container">
+      <h2 class="section-title"><span class="section-num">03</span> Featured projects</h2>
+      <p class="section-sub">Filter by stack — the buttons below use the same logic as the agent tool <code>filter_projects_by_stack</code>.</p>
+
+      <div id="project-filters" class="filters" role="group" aria-label="Filter projects by stack">
+        <!-- Filter chips rendered by app.js -->
+      </div>
+
+      <div id="projects-grid" class="projects-grid">
+        <!-- Project cards rendered by app.js -->
+      </div>
+      <noscript>
+        <p class="noscript-note">
+          This portfolio renders projects with JavaScript. Enable JS to see the project cards and the live agent-tools demo.
+        </p>
+      </noscript>
+    </section>
+
+    <!-- ===================== AI AGENT TOOLS DEMO ===================== -->
+    <section id="agent-tools" class="section container">
+      <h2 class="section-title"><span class="section-num">04</span> AI agent tools</h2>
+      <p class="section-sub">
+        This page registers tools an AI agent can call directly via <strong>WebMCP</strong>
+        (<code>navigator.modelContext</code>). The buttons below call those exact same tools, so you can
+        see the structured data an agent would get.
+      </p>
+
+      <div class="webmcp-status" id="webmcp-status" data-state="checking" role="status" aria-live="polite">
+        Checking for a WebMCP-capable browser…
+      </div>
+
+      <div class="tools-panel">
+        <div class="tool-buttons" role="group" aria-label="Run an agent tool">
+          <button class="tool-btn" data-tool="get_profile" type="button">Get Profile</button>
+          <button class="tool-btn" data-tool="list_skills" type="button">List Skills</button>
+          <button class="tool-btn" data-tool="list_projects" type="button">List Projects</button>
+          <button class="tool-btn" data-tool="filter_projects_by_stack" data-args='{"stack":"AI"}' type="button">Show AI Projects</button>
+          <button class="tool-btn" data-tool="filter_projects_by_stack" data-args='{"stack":"Python"}' type="button">Filter Python Projects</button>
+          <button class="tool-btn" data-tool="get_featured_project" type="button">Get Featured Project</button>
+          <button class="tool-btn" data-tool="get_contact_info" type="button">Get Contact Info</button>
+          <button class="tool-btn" data-tool="explain_why_agent_ready" type="button">Explain Agent-Ready</button>
+        </div>
+
+        <form id="stack-form" class="stack-form">
+          <label class="sr-only" for="stack-input">Filter projects by a stack</label>
+          <input
+            id="stack-input"
+            name="stack"
+            type="text"
+            autocomplete="off"
+            placeholder="Try any stack: FastAPI, Pyodide, TypeScript, JavaScript…"
+          />
+          <button class="btn btn-primary" type="submit">Run filter</button>
+        </form>
+
+        <div class="tool-output-wrap">
+          <div class="tool-output-head">
+            <span id="tool-output-label" class="tool-output-label">// agent tool output</span>
+            <button id="copy-output" class="mini-btn" type="button">Copy JSON</button>
+          </div>
+          <pre id="tool-output" class="tool-output" aria-live="polite">Click a tool above to see the structured JSON an AI agent would receive.</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CONTACT ===================== -->
+    <section id="contact" class="section container">
+      <h2 class="section-title"><span class="section-num">05</span> Contact</h2>
+      <div class="contact-card">
+        <div>
+          <h3 class="contact-title">Let's build something agent-ready.</h3>
+          <p class="contact-sub">
+            Open to internships, collaborations, and interesting AI/web problems. The fastest way to reach me:
+          </p>
+          <div class="contact-actions">
+            <button id="copy-contact" class="btn btn-primary" type="button" data-email="jhahimanshu653@gmail.com">
+              Copy email
+            </button>
+            <span id="copy-status" class="copy-status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+        <ul class="contact-links">
+          <li>
+            <a href="https://github.com/himanshu748" target="_blank" rel="noopener noreferrer">
+              <span aria-hidden="true">⌥</span> github.com/himanshu748
+            </a>
+          </li>
+          <li>
+            <a href="https://linkedin.com/in/himanshu748" target="_blank" rel="noopener noreferrer">
+              <span aria-hidden="true">in</span> linkedin.com/in/himanshu748
+            </a>
+          </li>
+          <li>
+            <a href="mailto:jhahimanshu653@gmail.com">
+              <span aria-hidden="true">✉</span> jhahimanshu653@gmail.com
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>
+        Built by <strong>Himanshu Kumar</strong> with plain HTML, CSS &amp; JavaScript —
+        and a WebMCP-style tool registry.
+      </p>
+      <p class="footer-meta">
+        <span>© <span id="year"></span> Himanshu Kumar</span>
+        <span class="footer-dot" aria-hidden="true">·</span>
+        <a href="tutorial.html">Read the tutorial</a>
+        <span class="footer-dot" aria-hidden="true">·</span>
+        <a href="#top">Back to top ↑</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- App logic: data, UI rendering, agent tools, and the WebMCP adapter -->
+  <script src="app.js" defer></script>
+</body>
+</html>
