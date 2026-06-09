@@ -8,6 +8,15 @@ Built with plain **HTML, CSS, and JavaScript**. No frameworks, no build step, no
 
 ---
 
+## 📖 Start here — which doc is which?
+
+This repo has **one lesson and one reference** — not two tutorials:
+
+- 🎓 **Learning how it's built?** → Read the **[step-by-step tutorial](tutorial.md)** (also published as a live web page, `tutorial.html`). **That's the teaching doc — start there.**
+- 📋 **Just want the overview, setup, and a quick reference?** → You're reading it. This **README does not teach the build**; it points you to the tutorial and lists the facts.
+
+---
+
 ## 📸 Screenshot
 
 > _Add a screenshot here once you've opened the site._ Save it as `screenshot.png` in this folder and it'll show below:
@@ -33,11 +42,9 @@ Built with plain **HTML, CSS, and JavaScript**. No frameworks, no build step, no
 
 ## 🤖 Why agent-ready websites matter
 
-AI agents are starting to *use* the web, not just read it. Today an agent has to scrape your HTML and guess what your buttons mean. That's brittle and error-prone.
+AI agents are starting to *use* the web, not just read it. Instead of making them scrape your HTML and guess, a WebMCP-ready site hands them a clean menu of named **tools** — same site, two front doors: a visual one for people, a structured one for agents.
 
-A WebMCP-ready site flips this around: it hands the agent a clean menu of **named tools** with descriptions and input schemas. The agent can ask "what can I do here?" and get a real answer — `get_featured_project`, `filter_projects_by_stack`, and so on. Same site, two front doors: a visual one for people, a structured one for agents.
-
-That's a small idea with a big payoff: your site becomes reliable for the next wave of AI browsers and assistants.
+→ The full "why" (and the deep "how") lives in the **[tutorial](tutorial.md)** (see "The hook" and "WebMCP, in depth").
 
 ---
 
@@ -67,12 +74,16 @@ No `npm install`. No bundler. No backend.
 
 ```
 webmcp-ready-portfolio/
-├── index.html      # Page structure + sections
-├── style.css       # Codédex-inspired pixel theme (dark + light)
-├── app.js          # Data, UI rendering, agent tools, WebMCP adapter
-├── README.md       # You are here
-└── tutorial.md     # Full step-by-step build tutorial
+├── index.html      # THE SITE — page structure + sections
+├── style.css       # THE SITE — Codédex pixel theme (dark + light)
+├── app.js          # THE SITE — data, UI, 7 agent tools + WebMCP adapter
+├── tutorial.md     # 🎓 THE LESSON — full step-by-step tutorial (source)
+├── tutorial.html   # 🎓 THE LESSON — same tutorial as a styled web page
+├── README.md       # 📋 Overview & quick reference (this file)
+└── vercel.json     # Static-host config (clean URLs)
 ```
+
+**The three roles, plainly:** the `index/style/app` files **are the website**; `tutorial.md` / `tutorial.html` **teach you how to build it**; this `README` is the **map** that sends you to the right place.
 
 ---
 
