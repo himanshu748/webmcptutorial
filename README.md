@@ -22,7 +22,7 @@ Built with plain **HTML, CSS, and JavaScript**. No frameworks, no build step, no
 
 - **Dual-audience design** — a polished site for humans, plus callable tools for AI agents.
 - **7 structured agent tools** (`get_profile`, `list_skills`, `list_projects`, `filter_projects_by_stack`, `get_featured_project`, `get_contact_info`, `explain_why_agent_ready`).
-- **Real WebMCP adapter** — registers tools with the browser's `navigator.modelContext` API when available, and falls back gracefully when it isn't.
+- **Real WebMCP integration** — loads the `@mcp-b/global` polyfill so `navigator.modelContext` actually exists, then registers all 7 tools on it and verifies them via the API. Falls back gracefully offline / on `file://`.
 - **Live "AI Agent Tools" demo panel** — click a button and see the exact JSON an agent would receive.
 - **Project filtering** — filter by stack using the *same* logic the agent tool uses.
 - **One source of truth** — the visible cards and the agent tools read from the same data, so they never disagree.
@@ -48,7 +48,7 @@ That's a small idea with a big payoff: your site becomes reliable for the next w
 | Markup | HTML5 (semantic) |
 | Styling | Plain CSS (custom properties, grid/flex), Google Fonts (Press Start 2P, Inter, VT323) |
 | Logic | Vanilla JavaScript (ES6, no dependencies) |
-| Agent layer | WebMCP (`navigator.modelContext`) with a safe fallback |
+| Agent layer | Real WebMCP via the `@mcp-b/global` polyfill (`navigator.modelContext`) + safe fallback |
 | Extras | Schema.org JSON-LD |
 
 No `npm install`. No bundler. No backend.
@@ -119,6 +119,21 @@ If you point a WebMCP-capable agent at this page (or just imagine one), these ar
 
 ---
 
+## 🔌 Connect a real AI agent
+
+The tools register on `navigator.modelContext` for real (via the polyfill). To actually call them from an agent:
+
+1. **WebMCP / MCP-B browser extension** — install it, open the (hosted, HTTPS) page, and it bridges your registered tools to an MCP client like Claude Desktop. It auto-detects pages that loaded `@mcp-b/global`.
+2. **Chrome native** — enable the `webmcp` flag in a recent Chrome/Canary; the built-in agent sees your tools directly.
+
+**Verify it yourself:** open the hosted page, open DevTools, and run:
+
+```js
+await navigator.modelContextTesting.listTools(); // → the 7 registered tools
+```
+
+You'll also see `[WebMCP] Live tools verified via the API: …` logged automatically on load.
+
 ## 🔒 Safety note
 
 This project intentionally ships **read-only** tools only. Each one is tagged with `annotations: { readOnlyHint: true }` so an agent knows it's always safe to call. There are no tools that send messages, spend money, or change data. If you add write-style tools later, gate them behind explicit user confirmation and keep private data out of tool responses.
@@ -171,7 +186,7 @@ Update the data once and the cards, the filters, and the agent tools all update 
 - WebMCP spec (W3C Web Machine Learning Community Group): https://webmachinelearning.github.io/webmcp/
 - WebMCP on Chrome for Developers: https://developer.chrome.com/docs/ai/webmcp
 
-> Note: WebMCP is new and evolving. As of mid-2026 it ships behind a flag in Chrome Canary and via the `@mcp-b/global` polyfill — so most visitors will hit the friendly fallback, and that's perfectly fine. The on-page demo always works.
+> Note: WebMCP is new and evolving. Native support is rolling out (Chrome Canary behind a `webmcp` flag), so this site loads the **`@mcp-b/global`** polyfill to make `navigator.modelContext` real today. Offline or on `file://`, the page falls back to the on-page demo — which always works.
 
 ---
 

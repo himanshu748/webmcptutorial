@@ -217,13 +217,16 @@
      Community Group). A page registers "tools" that an in-browser AI
      agent can call directly — no scraping. The real API lives on
      navigator.modelContext (the spec also defines document.modelContext),
-     so we feature-detect BOTH and fall back gracefully when neither
-     exists. As of now the API ships behind a flag in Chrome Canary and
-     via the @mcp-b/global polyfill, so most visitors will hit the
-     fallback — and that's fine: the on-page demo still works.
+     so we feature-detect BOTH.
 
-     NOTE: real WebMCP support depends on the browser/agent environment,
-     and the API requires a secure context (HTTPS or localhost).
+     index.html loads the @mcp-b/global polyfill, which auto-installs
+     navigator.modelContext — so on a hosted page these tools register for
+     REAL, and an AI agent (via the WebMCP browser extension or Chrome's
+     native support) can call them. If the polyfill can't load (offline,
+     file://, or a blocked CDN), we fall back to the on-page demo panel.
+
+     NOTE: the API requires a secure context (HTTPS or localhost), and
+     end-to-end agent calls need a WebMCP-aware client/extension.
      We never invent dangerous capabilities — every tool here is read-only.
      ================================================================= */
 
@@ -534,12 +537,66 @@
     if (!el) return;
     if (result.registered) {
       el.dataset.state = "ok";
-      el.textContent = `WebMCP detected — ${result.count} tools registered for agents on this page.`;
+      el.textContent = `WebMCP active — ${result.count} tools registered on navigator.modelContext.`;
     } else {
       el.dataset.state = "fallback";
       el.textContent =
-        "No WebMCP browser detected — the local demo below calls the exact same tools, so everything still works.";
+        "WebMCP API not loaded here — the local demo below calls the exact same tools, so everything still works.";
     }
+  }
+
+  /**
+   * Ask the WebMCP API itself which tools are live — real, independent proof
+   * that registration worked (not just that we called registerTool). Works with
+   * the polyfill's testing shim, @mcp-b/global's listTools, or native getTools.
+   */
+  function verifyRegistration() {
+    const el = document.getElementById("webmcp-status");
+    const mc = getModelContext();
+    const lister =
+      (mc && typeof mc.listTools === "function" && mc.listTools.bind(mc)) ||
+      (typeof navigator !== "undefined" &&
+        navigator.modelContextTesting &&
+        typeof navigator.modelContextTesting.listTools === "function" &&
+        navigator.modelContextTesting.listTools.bind(navigator.modelContextTesting)) ||
+      (mc && typeof mc.getTools === "function" && mc.getTools.bind(mc)) ||
+      null;
+    if (!lister) return;
+
+    Promise.resolve()
+      .then(lister)
+      .then((tools) => {
+        const list = Array.isArray(tools) ? tools : (tools && tools.tools) || [];
+        const names = list.map((t) => (t && t.name ? t.name : t));
+        if (!names.length) return;
+        console.info("[WebMCP] Live tools verified via the API:", names.join(", "));
+        if (el) {
+          el.dataset.state = "ok";
+          el.textContent = `WebMCP active — ${names.length} tools live on navigator.modelContext. Connect the WebMCP browser extension (or Chrome's webmcp flag) to call them from an AI agent.`;
+        }
+      })
+      .catch((err) => console.warn("[WebMCP] verify skipped:", err));
+  }
+
+  /**
+   * Register our tools once the WebMCP API is available. The @mcp-b/global
+   * polyfill auto-installs navigator.modelContext, but it may load a moment
+   * after us, so we poll briefly. If it never shows (offline / file:// /
+   * CDN blocked), we fall back to the on-page demo — no errors, no broken UI.
+   */
+  function setupWebMCP() {
+    let tries = 0;
+    const maxTries = 24; // ~3.6s at 150ms
+    (function attempt() {
+      if (getModelContext()) {
+        updateWebmcpStatus(registerAgentTools());
+        verifyRegistration();
+      } else if (++tries < maxTries) {
+        setTimeout(attempt, 150);
+      } else {
+        updateWebmcpStatus({ registered: false });
+      }
+    })();
   }
 
   /* =================================================================
@@ -567,9 +624,8 @@
     window.agentTools = agentTools;
     window.portfolioData = { profile: PROFILE, skills: SKILLS, projects: PROJECTS, contact: CONTACT };
 
-    // Try to register tools with the real WebMCP API, then report status.
-    const status = registerAgentTools();
-    updateWebmcpStatus(status);
+    // Register with the real WebMCP API once the polyfill is ready, then verify.
+    setupWebMCP();
 
     // A friendly nudge for anyone who opens DevTools.
     console.info(

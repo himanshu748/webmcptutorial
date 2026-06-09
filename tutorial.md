@@ -368,13 +368,24 @@ Notice `get_contact_info` returns `twitter: null` instead of inventing a handle.
 
 ## 10. Step 6 — Add the WebMCP adapter
 
-Time to let real agents call these tools. WebMCP exposes a browser object — `navigator.modelContext` (the spec also defines `document.modelContext`) — with a `registerTool()` method. We'll:
+Time to let real agents call these tools — for real. WebMCP exposes a browser object, `navigator.modelContext` (the spec also defines `document.modelContext`), with a `registerTool()` method. We'll:
 
-1. Describe each tool with a **name**, **description**, and **input schema**.
-2. **Feature-detect** the API (it's new — most browsers don't have it yet).
-3. Register every tool, or **fall back gracefully** if the API is missing.
+1. **Load the polyfill** so `navigator.modelContext` actually exists in today's browsers.
+2. Describe each tool with a **name**, **description**, and **input schema**.
+3. **Feature-detect** the API and register every tool — or **fall back gracefully** if it's missing.
 
-First, the tool descriptions. The `inputSchema` is standard **JSON Schema** — it tells the agent what arguments to pass:
+### Make the API real with one script tag
+
+Native WebMCP is still rolling out (Chrome Canary behind a `webmcp` flag), so to make this work in browsers today we load the official **`@mcp-b/global`** polyfill from the WebMCP / MCP-B project. It auto-installs `navigator.modelContext` — no build step:
+
+```html
+<!-- in <head>, before app.js -->
+<script defer src="https://unpkg.com/@mcp-b/global@3.0.0/dist/index.iife.js"></script>
+```
+
+That's it — `navigator.modelContext` is now live, and the `registerTool` calls below are the real thing. (If this script can't load — offline, `file://`, or a blocked CDN — the page quietly falls back to the on-page demo.)
+
+Now, the tool descriptions. The `inputSchema` is standard **JSON Schema** — it tells the agent what arguments to pass:
 
 ```js
 const WEBMCP_TOOLS = [
@@ -453,21 +464,56 @@ function registerAgentTools() {
 That's the entire adapter. Two things to call out:
 
 - **`annotations: { readOnlyHint: true }`** is a real WebMCP safety signal. It tells the agent "this tool only reads — it's always safe to call."
-- **The fallback is the hero.** WebMCP isn't in stable browsers yet (as of mid-2026 it's behind a flag in Chrome Canary, or via the `@mcp-b/global` polyfill). So `getModelContext()` will usually return `null` — and that's *fine*. We don't crash, we don't fake it; we just light up the demo panel instead. Also note WebMCP needs a **secure context** (HTTPS or `localhost`), and real support depends on the browser/agent environment.
+- **It's really registered now.** Because we loaded the `@mcp-b/global` polyfill, `getModelContext()` returns a real object and all 7 tools register on `navigator.modelContext`. The fallback only kicks in when the polyfill can't load (offline, `file://`, blocked CDN) — then the demo panel covers you. WebMCP also needs a **secure context** (HTTPS or `localhost`).
 
-Finally, on page load, expose the tools and try to register them:
+Finally, on page load, expose the tools, register them once the polyfill is ready, and **verify** with the API itself:
 
 ```js
-window.agentTools = agentTools;          // for the console & test scripts
-const status = registerAgentTools();     // for real agents
-updateWebmcpStatus(status);              // update the status badge in the UI
+window.agentTools = agentTools; // for the console & test scripts
+
+// The polyfill may load a moment after us, so poll briefly, then register.
+function setupWebMCP() {
+  let tries = 0;
+  (function attempt() {
+    if (getModelContext()) {
+      updateWebmcpStatus(registerAgentTools());
+      verifyRegistration();              // ask the API which tools are live
+    } else if (++tries < 24) {
+      setTimeout(attempt, 150);          // ~3.6s of patience for the CDN
+    } else {
+      updateWebmcpStatus({ registered: false });
+    }
+  })();
+}
+setupWebMCP();
 ```
+
+And the honest proof — ask WebMCP itself what's registered:
+
+```js
+async function verifyRegistration() {
+  // The polyfill installs a testing surface; @mcp-b/global also adds listTools().
+  const tools = await navigator.modelContextTesting.listTools();
+  console.log("Live WebMCP tools:", tools.map((t) => t.name));
+}
+```
+
+Open DevTools on the hosted page and you'll see all 7 tool names logged — actually registered on `navigator.modelContext`, ready for an agent.
+
+### Connect a real AI agent
+
+Two ways to call these tools from an agent:
+
+1. **WebMCP / MCP-B browser extension** — install it, open your page, and it bridges your registered tools to an MCP client (like Claude Desktop). It auto-detects pages that loaded `@mcp-b/global`.
+2. **Chrome's native support** — enable the `webmcp` flag in a recent Chrome/Canary; the browser's built-in agent can then see your tools directly.
+
+Either way, you wrote zero agent code — you just *described your tools*, and the browser does the rest. ✨
 
 ---
 
 ## 11. Step 7 — Build the demo panel
 
-WebMCP might be invisible today, so let's give humans a way to *experience* the tools. The demo panel calls the **exact same `agentTools`** an agent would.
+Even with real WebMCP wired up, the tools are invisible without an agent — so let's give humans a way to *experience* them. The demo panel calls the **exact same `agentTools`** an agent would.
 
 Remember those `data-tool` buttons? One delegated handler wires them all:
 

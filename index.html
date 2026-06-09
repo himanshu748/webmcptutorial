@@ -168,9 +168,10 @@
     <section id="agent-tools" class="section container">
       <h2 class="section-title"><span class="section-num">04</span> AI agent tools</h2>
       <p class="section-sub">
-        This page registers tools an AI agent can call directly via <strong>WebMCP</strong>
-        (<code>navigator.modelContext</code>). The buttons below call those exact same tools, so you can
-        see the structured data an agent would get.
+        This page registers <strong>real WebMCP tools</strong> on <code>navigator.modelContext</code>
+        (via the <code>@mcp-b/global</code> polyfill), so an AI agent — through the WebMCP browser
+        extension or Chrome's native support — can call them directly. The buttons below call those exact
+        same tools, so you can see the structured data an agent receives.
       </p>
 
       <div class="webmcp-status" id="webmcp-status" data-state="checking" role="status" aria-live="polite">
@@ -209,6 +210,12 @@
           <pre id="tool-output" class="tool-output" aria-live="polite">Click a tool above to see the structured JSON an AI agent would receive.</pre>
         </div>
       </div>
+
+      <p class="section-sub">
+        <strong>Want to call these from a real AI agent?</strong> Install the WebMCP / MCP-B browser
+        extension (or enable Chrome's <code>webmcp</code> flag), then open this page — your tools appear
+        to the agent automatically. No extension? The demo panel above still runs every tool locally.
+      </p>
     </section>
 
     <!-- ===================== CONTACT ===================== -->
@@ -264,6 +271,11 @@
       </p>
     </div>
   </footer>
+
+  <!-- Real WebMCP: the @mcp-b/global polyfill auto-installs navigator.modelContext
+       so our tools genuinely register for AI agents. Loaded with defer so it runs
+       before app.js. If it can't load (offline / file://), app.js falls back gracefully. -->
+  <script defer src="https://unpkg.com/@mcp-b/global@3.0.0/dist/index.iife.js"></script>
 
   <!-- App logic: data, UI rendering, agent tools, and the WebMCP adapter -->
   <script src="app.js" defer></script>
